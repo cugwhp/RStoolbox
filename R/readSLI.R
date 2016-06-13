@@ -50,7 +50,7 @@ readSLI <- function(path) {
     if (data_type == 4) bytes <- 4
     if (data_type == 5) bytes <- 8	
     x <- data.frame(matrix(nrow=bands, ncol=lines))
-    x[] <- readBin(path, "numeric", n = 1000000, size = bytes)
+    x[] <- readBin(path, "numeric", n = 1603616, size = bytes)
     colnames(x) <- labels
     x <- cbind(wavelengths,x)
     colnames(x)[1] <- "wavelength"
