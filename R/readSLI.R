@@ -12,16 +12,20 @@
 #' @template examples_SLI
 readSLI <- function(path) {
     
-    ## Figure out file naming convention of hdr file for either combination of 
-    ## (filename.sli + filename.sli.hdr) OR (filename.sli + filename.hdr)
-    hdr_path <- paste0(path, ".hdr")
-    if(!file.exists(hdr_path)){
-        hdr_path <- paste0(strsplit(path,"[.]")[[1]][1], ".hdr")
-        if (!file.exists(hdr_path)){
-            stop(paste0("Can't find header file of", path), call.= FALSE)
-        }
+    ## Figure out file naming convention of hdr file for (filename.sli + filename.hdr)
+    ## Does not read in file with (filename.sli + filename.sli.hdr) anymore
+    if (grepl(".sli",path) == TRUE){
+      hdr_path <- sub(".sli",".hdr",path)
+      data_path <- path
+    }else{
+      hdr_path <- paste0(path, ".hdr")
+      data_path <- paste0(path, ".sli")
     }
-    
+
+    if (!file.exists(hdr_path)){
+      stop(paste0("Can't find header file of ", path), call.= FALSE)
+    }
+     
     ## Get header info
     hdr   <- readLines(hdr_path, n=-1L)
     bands <- .getNumeric(hdr[grep("samples", hdr)])
@@ -45,12 +49,16 @@ readSLI <- function(path) {
     wavelengths <- hdr[(id[1]+1):(id[2])]
     wavelengths <- gsub( "\\}| ", "", paste( wavelengths, collapse=","))
     wavelengths <- as.numeric( unlist( strsplit( gsub(",,",",", wavelengths), ",")))
+    print('Done with header')
     
     ## Read binary sli file
     if (data_type == 4) bytes <- 4
-    if (data_type == 5) bytes <- 8	
+    if (data_type == 5) bytes <- 8
     x <- data.frame(matrix(nrow=bands, ncol=lines))
-    x[] <- readBin(path, "numeric", n = 1603616, size = bytes)
+    print('Finished creating matrix')
+    datafile <- file(data_path,'rb')
+    x[] <- readBin(datafile, "integer", n = (bands*lines), size = bytes)
+    print('Created library')
     colnames(x) <- labels
     x <- cbind(wavelengths,x)
     colnames(x)[1] <- "wavelength"
